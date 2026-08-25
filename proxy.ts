@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { parseSetCookie } from "cookie";
+
 import { checkSession } from "./lib/api/serverApi";
 
 const protectedRoutes = ["/profile", "/notes"];

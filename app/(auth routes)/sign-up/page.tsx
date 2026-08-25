@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { register } from "@/lib/api/clientApi";
 import css from "./SignUpPage.module.css";
 
+import { useAuthStore } from "@/lib/store/authStore";
+
 export default function SignUp() {
+  const setUser = useAuthStore((state) => state.setUser);
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,12 +23,13 @@ export default function SignUp() {
     const password = formData.get("password") as string;
 
     try {
-      await register({ email, password });
+      const userData = await register({ email, password });
+      setUser(userData);
       router.push("/profile");
     } catch (err: any) {
-      
       const message =
-        err.response?.data?.message || "Something went wrong. Please try again.";
+        err.response?.data?.message ||
+        "Something went wrong. Please try again.";
       setError(message);
     } finally {
       setLoading(false);
@@ -35,7 +39,7 @@ export default function SignUp() {
   return (
     <main className={css.mainContent}>
       <h1 className={css.formTitle}>Sign up</h1>
-      
+
       <form className={css.form} onSubmit={handleSubmit}>
         <div className={css.formGroup}>
           <label htmlFor="email">Email</label>
@@ -62,11 +66,7 @@ export default function SignUp() {
         </div>
 
         <div className={css.actions}>
-          <button 
-            type="submit" 
-            className={css.submitButton}
-            disabled={loading}
-          >
+          <button type="submit" className={css.submitButton} disabled={loading}>
             {loading ? "Registering..." : "Register"}
           </button>
         </div>

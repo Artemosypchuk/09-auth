@@ -15,8 +15,8 @@ type LoginData = {
   password: string;
 };
 type UpdateProfileData = {
-  email?: string;
-  username?: string;
+  email: string;
+  username: string;
 };
 
 export async function fetchNotes(
@@ -54,7 +54,6 @@ export async function deleteNote(id: string): Promise<Note> {
 
 export async function register(registerData: RegisterData): Promise<User> {
   const response = await API.post<User>("/auth/register", registerData);
-  console.log(response);
   return response.data;
 }
 export async function login(loginData: LoginData): Promise<User> {

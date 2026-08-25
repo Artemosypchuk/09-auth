@@ -1,5 +1,7 @@
 import css from "./ProfilePage.module.css";
 
+import type { Metadata } from "next";
+
 import { redirect } from "next/navigation";
 import axios from "axios";
 
@@ -7,6 +9,11 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { getMe } from "@/lib/api/serverApi";
+
+export const metadata: Metadata = {
+  title: "Profile | NoteHub",
+  description: "User profile page in NoteHub application",
+};
 
 export default async function Profile() {
   let user;

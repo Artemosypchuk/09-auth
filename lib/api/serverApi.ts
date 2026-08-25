@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 
+import type { AxiosResponse } from "axios";
+
 import api from "@/app/api/api";
 import { Note } from "@/types/note";
 import { User } from "@/types/user";
@@ -64,13 +66,13 @@ export async function getMe(): Promise<User | undefined> {
   }
 }
 
-export async function checkSession(): Promise<User | undefined> {
+export async function checkSession(): Promise<AxiosResponse<User>> {
   try {
     const headers = await getAuthHeader();
-    const { data } = await api.get<User>("/auth/session", {
+    const response = await api.get<User>("/auth/session", {
       headers,
     });
-    return data;
+    return response;
   } catch (error) {
     console.error("Error in checkSession:", error);
     throw error;

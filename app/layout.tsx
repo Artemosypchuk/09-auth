@@ -42,14 +42,14 @@ export default function RootLayout({ children, modal }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${roboto.className} ${roboto.variable}`}>
-        <AuthProvider>
-          <TanStackProvider>
+        <TanStackProvider>
+          <AuthProvider>
             <Header />
             <main>{children}</main>
             {modal}
             <Footer />
-          </TanStackProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </TanStackProvider>
       </body>
     </html>
   );

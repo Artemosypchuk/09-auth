@@ -1,25 +1,24 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { parseSetCookie } from "cookie";
 import { checkSession } from "./lib/api/serverApi";
 
 const protectedRoutes = ["/profile", "/notes"];
 const authRoutes = ["/sign-in", "/sign-up"];
 
-function getCookieValueFromHeader(
+function getCookieValueFromHeaders(
   setCookieHeaders: string[],
   cookieName: string,
 ): string | undefined {
   for (const header of setCookieHeaders) {
-    const parts = header.split(";");
-    for (const part of parts) {
-      const [name, value] = part.trim().split("=");
-      if (name === cookieName) {
-        return value;
-      }
+    const parsed = parseSetCookie(header);
+    if (parsed && parsed.name === cookieName) {
+      return parsed.value;
     }
   }
   return undefined;
 }
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -38,7 +37,7 @@ export async function proxy(request: NextRequest) {
             Array.isArray(setCookieHeaders) ? setCookieHeaders : (
               [setCookieHeaders]
             );
-          const newAccessToken = getCookieValueFromHeader(
+          const newAccessToken = getCookieValueFromHeaders(
             sessionResponseCookies,
             "accessToken",
           );
@@ -75,9 +74,11 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 function appendSetCookies(response: NextResponse, cookies: string[]) {
-  cookies.forEach((cookieString) => {
-    response.headers.append("Set-Cookie", cookieString);
-  });
+  if (cookies && cookies.length > 0) {
+    cookies.forEach((cookieString) => {
+      response.headers.append("Set-Cookie", cookieString);
+    });
+  }
 }
 export const config = {
   matcher: ["/profile/:path*", "/notes/:path*", "/sign-in", "/sign-up"],

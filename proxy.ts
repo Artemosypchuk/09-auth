@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { parseSetCookie } from "cookie";
-
 import { checkSession } from "./lib/api/serverApi";
 
 const protectedRoutes = ["/profile", "/notes"];
@@ -22,9 +21,9 @@ function getCookieValueFromHeaders(
 }
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const cookieStore = await cookies();
+  const { pathname, search } = request.nextUrl;
 
+  const cookieStore = await cookies();
   let accessToken = cookieStore.get("accessToken")?.value;
   const refreshToken = cookieStore.get("refreshToken")?.value;
 
@@ -40,10 +39,12 @@ export async function proxy(request: NextRequest) {
             Array.isArray(setCookieHeaders) ? setCookieHeaders : (
               [setCookieHeaders]
             );
+
           const newAccessToken = getCookieValueFromHeaders(
             sessionResponseCookies,
             "accessToken",
           );
+
           if (newAccessToken) {
             accessToken = newAccessToken;
           }
@@ -53,6 +54,7 @@ export async function proxy(request: NextRequest) {
       console.error("Failed to refresh session in proxy:", error);
     }
   }
+
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route),
   );
@@ -60,29 +62,38 @@ export async function proxy(request: NextRequest) {
 
   if (isProtectedRoute && !accessToken) {
     const loginUrl = new URL("/sign-in", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    const fullCallbackUrl = pathname + search;
+
+    loginUrl.searchParams.set("callbackUrl", fullCallbackUrl);
+
     const response = NextResponse.redirect(loginUrl);
-    appendSetCookies(response, sessionResponseCookies);
+    setCookiesIfPresent(response, sessionResponseCookies);
     return response;
   }
 
   if (isAuthRoute && accessToken) {
     const response = NextResponse.redirect(new URL("/", request.url));
-    appendSetCookies(response, sessionResponseCookies);
+    setCookiesIfPresent(response, sessionResponseCookies);
     return response;
   }
 
   const response = NextResponse.next();
-  appendSetCookies(response, sessionResponseCookies);
+  setCookiesIfPresent(response, sessionResponseCookies);
   return response;
 }
-function appendSetCookies(response: NextResponse, cookies: string[]) {
-  if (cookies && cookies.length > 0) {
-    cookies.forEach((cookieString) => {
-      response.headers.append("Set-Cookie", cookieString);
+
+function setCookiesIfPresent(response: NextResponse, cookiesList: string[]) {
+  if (cookiesList && cookiesList.length > 0) {
+    cookiesList.forEach((cookieString, index) => {
+      if (index === 0) {
+        response.headers.set("Set-Cookie", cookieString);
+      } else {
+        response.headers.append("Set-Cookie", cookieString);
+      }
     });
   }
 }
+
 export const config = {
   matcher: ["/profile/:path*", "/notes/:path*", "/sign-in", "/sign-up"],
 };

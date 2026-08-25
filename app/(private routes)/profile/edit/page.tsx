@@ -21,7 +21,10 @@ export default function EditProfilePage() {
     setLoading(true);
 
     try {
-      const updatedUser = await updateProfile({ username });
+      const updatedUser = await updateProfile({
+        username,
+        email: user?.email ?? "",
+      });
       setUser(updatedUser);
 
       router.push("/profile");

@@ -3,7 +3,6 @@
 import ReactPaginateModule from "react-paginate";
 import css from "./Pagination.module.css";
 
-// Безпечне розпакування експорту для Next.js
 const ReactPaginate =
   typeof ReactPaginateModule === "function"
     ? ReactPaginateModule

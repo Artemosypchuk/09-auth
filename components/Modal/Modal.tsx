@@ -10,15 +10,13 @@ interface ModalProps {
   children: React.ReactNode;
 }
 
-// Порожня підписка для useSyncExternalStore
 const emptySubscribe = () => () => {};
 
-// Хук для безпечної перевірки, чи ми на клієнті
 function useIsClient() {
   return useSyncExternalStore(
     emptySubscribe,
-    () => true, // Значення на клієнті
-    () => false, // Значення на сервері (SSR)
+    () => true,
+    () => false,
   );
 }
 
@@ -43,7 +41,6 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
     };
   }, [isOpen, onClose]);
 
-  // Якщо ми ще на сервері АБО модалка закрита — нічого не рендеримо
   if (!isClient || !isOpen) {
     return null;
   }

@@ -84,11 +84,29 @@ export async function proxy(request: NextRequest) {
 
 function setCookiesIfPresent(response: NextResponse, cookiesList: string[]) {
   if (cookiesList && cookiesList.length > 0) {
-    cookiesList.forEach((cookieString, index) => {
-      if (index === 0) {
-        response.headers.set("Set-Cookie", cookieString);
-      } else {
-        response.headers.append("Set-Cookie", cookieString);
+    cookiesList.forEach((cookieString) => {
+      const parsed = parseSetCookie(cookieString);
+
+      if (parsed && parsed.name && typeof parsed.value === "string") {
+        let sameSite: "strict" | "lax" | "none" | undefined = undefined;
+
+        if (typeof parsed.sameSite === "string") {
+          const lower = parsed.sameSite.toLowerCase();
+          if (lower === "strict" || lower === "lax" || lower === "none") {
+            sameSite = lower;
+          }
+        }
+
+        response.cookies.set({
+          name: parsed.name,
+          value: parsed.value,
+          path: parsed.path || "/",
+          domain: parsed.domain || undefined,
+          expires: parsed.expires ? new Date(parsed.expires) : undefined,
+          httpOnly: parsed.httpOnly ?? undefined,
+          secure: parsed.secure ?? undefined,
+          sameSite,
+        });
       }
     });
   }

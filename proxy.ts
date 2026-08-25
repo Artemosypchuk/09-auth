@@ -3,9 +3,23 @@ import type { NextRequest } from "next/server";
 import { checkSession } from "./lib/api/serverApi";
 
 const protectedRoutes = ["/profile", "/notes"];
-
 const authRoutes = ["/sign-in", "/sign-up"];
 
+function getCookieValueFromHeader(
+  setCookieHeaders: string[],
+  cookieName: string,
+): string | undefined {
+  for (const header of setCookieHeaders) {
+    const parts = header.split(";");
+    for (const part of parts) {
+      const [name, value] = part.trim().split("=");
+      if (name === cookieName) {
+        return value;
+      }
+    }
+  }
+  return undefined;
+}
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -24,7 +38,13 @@ export async function proxy(request: NextRequest) {
             Array.isArray(setCookieHeaders) ? setCookieHeaders : (
               [setCookieHeaders]
             );
-            accessToken = 'refreshed';
+          const newAccessToken = getCookieValueFromHeader(
+            sessionResponseCookies,
+            "accessToken",
+          );
+          if (newAccessToken) {
+            accessToken = newAccessToken;
+          }
         }
       }
     } catch (error) {
@@ -39,7 +59,9 @@ export async function proxy(request: NextRequest) {
   if (isProtectedRoute && !accessToken) {
     const loginUrl = new URL("/sign-in", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+    const response = NextResponse.redirect(loginUrl);
+    appendSetCookies(response, sessionResponseCookies);
+    return response;
   }
 
   if (isAuthRoute && accessToken) {
